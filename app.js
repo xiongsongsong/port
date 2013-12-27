@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-
 var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
@@ -19,8 +18,9 @@ app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.methodOverride());
+app.use(express.cookieParser('your secret here'));
+app.use(express.session());
 app.use(app.router);
-app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
@@ -28,11 +28,20 @@ if ('development' == app.get('env')) {
     app.use(express.errorHandler());
 }
 
-
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });
 
+function addSkillGroupCount(req) {
+    if (typeof req.session.skillGroupCount !== 'number') {
+        console.log('init skillGroup')
+        req.session.skillGroupCount = 0
+    } else {
+        console.log('init skillGroup++')
+        req.session.skillGroupCount = req.session.skillGroupCount + 1
+    }
+    return req.session.skillGroupCount
+}
 
 app.get('/mobile/similarQuestions.json', function (req, res) {
     if (Math.random() * 10 < 2) {
@@ -41,7 +50,6 @@ app.get('/mobile/similarQuestions.json', function (req, res) {
         res.json({"msg": "参数不合法", "stat": "fail1111"})
     }
 })
-
 
 //获取当前是否人工客服时间段
 app.get('/checkServiceTime.json', function (req, res) {
@@ -76,20 +84,21 @@ app.get('/inputSuggest.json', function (req, res) {
 })
 
 //在人工开始之前的对话请求，注意：一旦人工开始后，就改用fetchMessage抓取消息
-var skillGroupCount = 5
 app.get('/guideQuestion.json', function (req, res) {
     res.header('content-type', 'application/json;charset=utf-8')
-    skillGroupCount--
+    var count = addSkillGroupCount(req)
     var data = {
         time: Date.now(),
         "stat": "ok",
-        "info": {"reply": '还有' + skillGroupCount + '次转人工' + req.query.question.split('').reverse().join(''), "skillGroup": skillGroupCount.toString()}
+        "info": {
+            "reply": '第' + (count + 1) + '次交谈（满4次弹出转人工面板），您说了：' + req.query.question.split('').reverse().join(''),
+            "skillGroup": count.toString()
+        }
     }
     res.header('content-type', 'application/javascript;charset=utf-8')
     setTimeout(function () {
         res.end(req.query._callback + '(' + JSON.stringify(data, undefined, '  ') + ')')
     }, Math.random() * 1000)
-
 })
 
 
@@ -121,41 +130,51 @@ app.get('/client/connectServer.json', function (req, res) {
     res.json(data)
 })
 
-//轮询抓取消息
-var 模拟排队 = 20
+function 模拟排队(req) {
 
-setInterval(function () {
-    模拟排队--
-}, 1000)
+    if (!req.session.queue) {
+        req.session.queue = 5 + parseInt(Math.random() * 10, 10)
+    } else {
+        req.session.queue = req.session.queue - (Math.random() > .3 ? 1 : 2)
+    }
+    return req.session.queue
+}
 
 app.get('/fetchMessage.json', function (req, res) {
+
     res.header('content-type', 'application/json;charset=utf-8')
+
+    var queue = 模拟排队(req)
+
+    console.log('排队人数' + queue)
 
     var data = [
         {
             "bankCardNo": "",
             "cmd": "queueWait",
-            "content": "您前面还有<font color=\"#ff6600\"><span style=\"BACKGROUND-COLOR: rgb(255,255,255); COLOR: rgb(255,153,0)\">'+模拟排队+'<\/span><\/font>位访客正在等候服务，预计需等" +
+            "content": "您前面还有<font color=\"#ff6600\"><span style=\"BACKGROUND-COLOR: rgb(255,255,255); COLOR: rgb(255,153,0)\">'+queue+'<\/span><\/font>位访客正在等候服务，预计需等" +
                 "<font color=\"#ff6600\"><span style=\"BACKGROUND-COLOR: rgb(255,255,255); COLOR: rgb(255,153,0)\">1<\/span><\/font>分钟,请稍候！\n<br><br>" +
                 "<font color=\"#ff9900\">【温馨提示】<\/font>排队高峰期，建议您先咨询 " +
                 "<font color=\"#0000ff\"><a href=\"#\" class=\"J_ResumeRobot\">智能小宝<\/a><\/font>." +
                 "<br>（<font color=\"#ff9900\">余额宝问题 <\/font>" +
                 "<a href=\"http://help.alipay.com/lab/help_detail.htm?help_id=257308\" target=\"_blank\">点此查看<\/a>）",
-            "count": 27,
+            "count": queue,
             "email": "",
             "encryptVisitorId": "",
             "extValues": {
                 "ACTIVE_SERVER": "119",
-                "msg_id": "86251", "^queueCount$": "27", "estimateWaitTime": "1"},
+                "msg_id": "86251", "^queueCount$": "27", "estimateWaitTime": "1"
+            },
             "identify": false, "logonId": "", "mid": "86251", "reasonFlag": 0,
             "serverName": "", "sid": "", "uname": "", "visitorId": "",
             "visitorToken": "0e4a76f53c4f446b9d414532e8ef452e"}
     ]
 
     var data2 = [
-        {"bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是云在线10888，很高兴为您服务。<br>" +
-            "模拟排队，还有：" + 模拟排队 + '位人',
-            "count": 0, "email": "", "encryptVisitorId": "",
+        {
+            count: queue,
+            "bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>您问我" + req.query.content,
+            "email": "", "encryptVisitorId": "",
             "extValues": {
                 "contextToken": "d419f135176e4990a7f218c3448f21fd003",
                 "msg_id": "0bd90", "msg_code": "CONVERSATION_CONNECT"
@@ -171,7 +190,7 @@ app.get('/fetchMessage.json', function (req, res) {
             "bankCardNo": "",
             "cmd": "sessionClosed",
             "content": "由于您长时间未有响应，系统已结束您的对话。",
-            "count": 0, "email": "", "encryptVisitorId": "",
+            "count": queue, "email": "", "encryptVisitorId": "",
             "extValues": {
                 "actor_type": "1", "msg_id": "47746", "msg_code": "CONVERSATION_CLOSE", "^closeType$": "2"
             },
@@ -184,13 +203,15 @@ app.get('/fetchMessage.json', function (req, res) {
     ]
 
 
-    if (模拟排队 > 0) {
-        res.end(JSON.stringify(data))
-    } else if (模拟排队 < 0 && 模拟排队 >= -20) {
-        res.end(JSON.stringify(data2))
-    } else if (模拟排队 < -20) {
-        res.end(JSON.stringify(data3))
-    }
+    setTimeout(function () {
+        if (queue > 0) {
+            res.end(JSON.stringify(data))
+        } else if (queue <= 0 && queue >= -20) {
+            res.end(JSON.stringify(data2))
+        } else if (queue < -10) {
+            res.end(JSON.stringify(data3))
+        }
+    }, 1500)
 })
 
 //当cmd返回sessionStart的时候，client可以开始调用sendMessage接口，第一次调用的时候，客户端必须将之前问的问题全部发送过来。
@@ -199,7 +220,7 @@ app.post('/sendMessage.json', function (req, res) {
     var data = {
         "time": "2013-12-27 11:06:10",
         "sendMessageForm": {
-            "content": req.body.content + Date.now(),
+            "content": req.body.content,
             "sid": "018a340b761c4bfb8f2e3c5486d47a07006",
             "src": "",
             "token": "70947407aed94fe1a5dca0c0db06f580",
@@ -214,7 +235,7 @@ app.post('/sendMessage.json', function (req, res) {
 
 //结束会话
 app.get('/client/visitorOffline.json', function (req, res) {
-    模拟排队 = 20
+    req.session.queue = 23
+    req.session.skillGroupCount = 0
     res.json({"msg": "处理成功", "stat": "ok"})
-
 })

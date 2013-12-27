@@ -113,7 +113,6 @@ https://clive.alipay.com/fetchMessage.json?token=6a58013c7d2942459a63282f3d3172e
 [{"bankCardNo":"","cmd":"text","content":"[㊣MSG][㊣SER]云在线10888[/㊣SER][㊣TIME]2013-12-26 16:04:57[/㊣TIME][㊣CONTENT]您好。[/㊣CONTENT][/㊣MSG]","count":0,"email":"","encryptVisitorId":"","extValues":{"msg_id":"b7a02"},"identify":false,"logonId":"","mid":"b7a02","reasonFlag":0,"serverName":"","sid":"d419f135176e4990a7f218c3448f21fd003","uname":"","visitorId":"","visitorToken":"6a58013c7d2942459a63282f3d3172ed"}]
 
 token:6a58013c7d2942459a63282f3d3172ed
-t:1388045910500
 t:1388045920516
 mids:
 _input_charset:utf-8

@@ -6,6 +6,12 @@
 define(function (require, exports, module) {
 
     var $ = require('$')
+
+
+    //页面刷新的时候，清空下状态
+    $.get('/client/visitorOffline.json')
+
+
     var AutoComplete = require('autocomplete')
     var Handlebars = require('handlebars')
     var survey = document.forms['survey']
@@ -14,6 +20,7 @@ define(function (require, exports, module) {
     //当前聊天模式
     //xiaobao:智能机器人聊天
     //yunzaixian:人工客服聊天模式
+    //waitYunzaixian 云在线排队状态
     var chatStatus = 'xiaobao'
 
     //判断消息发送频率
@@ -36,15 +43,18 @@ define(function (require, exports, module) {
         '</div>')
 
     //排队的模板
-    var queueTpl = Handlebars.compile('<div class="queue"><div class="title">正在为您转到人工服务</div>' +
-        '<div class="info">还有32人正在排队</div></div>')
+    var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您转到人工服务</div>' +
+        '<div class="info">还有<span class="J-queuing-number">{{queuingNumber}}</span>人正在排队</div></div>')
 
     /*添加一个气泡*/
     function addPopup(data) {
 
         console.log('开始添加气泡，气泡状态', data.status)
+        //todo:此处暂时用本地时间
+        data.time = new Date()
 
         switch (data.status) {
+            //用户发送消息所产生的气泡
             case 'chat':
                 console.log('显示用户发送的消息')
                 var hour = data.time.getHours()
@@ -57,6 +67,7 @@ define(function (require, exports, module) {
                     content: data.content
                 }))
                 break;
+            //服务器返回的气泡
             case 'server':
                 console.log('显示服务器发送的消息')
                 var hour = data.time.getHours()
@@ -85,8 +96,7 @@ define(function (require, exports, module) {
     function guideQuestion(content, callback) {
         addPopup({
             status: 'chat',
-            content: content,
-            time: new Date()
+            content: content
         })
         $.ajax({
             url: '/guideQuestion.json',
@@ -108,11 +118,11 @@ define(function (require, exports, module) {
         }).success(function (data) {
                 addPopup({
                     status: 'server',
-                    content: data.info.reply,
-                    time: new Date()
+                    content: data.info.reply
                 })
-                if (data.info.skillGroup < 1) {
-                    $content.append(queueTpl({}))
+                if (parseInt(data.info.skillGroup, 10) > 3) {
+                    $('#artificial-service').show()
+                    $content.css({bottom: $('#artificial-service').height() - 1})
                 }
             }).error(function () {
 
@@ -136,8 +146,7 @@ define(function (require, exports, module) {
         }).success(function (data) {
                 addPopup({
                     status: 'chat',
-                    content: data.sendMessageForm.content,
-                    time: new Date(data.time)
+                    content: data.sendMessageForm.content
                 })
             })
             .error(function () {
@@ -162,6 +171,9 @@ define(function (require, exports, module) {
                 case 'yunzaixian':
                     sendMessageToXiaobao(content, callback)
                     break;
+                case 'waitYunzaixian':
+
+                    break;
             }
 
             if (callback) callback()
@@ -175,14 +187,168 @@ define(function (require, exports, module) {
         clearTimeout(delaySendMessageCL)
         delaySendMessageCL = setTimeout(function () {
             delaySendMessage = false
-        }, 800)
+        }, 500)
     }
 
-    exports.sendMessage = sendMessage
+    //长链接，循环抓取服务器消息
+    var beforeFetchMessageCl
+
+    function fetchMessage() {
+        //防止多次调用
+        clearTimeout(beforeFetchMessageCl)
+        //todo:t定义了2次
+        var param = {
+            token: '6a58013c7d2942459a63282f3d3172ed',
+            t: 1388045910500,
+            t: 1388045920516,
+            mids: '',
+            _input_charset: 'utf-8',
+            language: 1,
+            instanceId: 1,
+            serviceToken: 'b21b38a97ff14a5983c13bd66d3b3ac1000'
+        }
+        $.ajax({
+            url: '/fetchMessage.json',
+            type: 'get',
+            dataType: 'json',
+            data: param
+        }).success(function (data) {
+                $(data).each(function (index, item) {
+                    var content
+                    console.log('轮询消息,cmd:', item.cmd, '剩余排队人数' + item.count)
+                    switch (item.cmd) {
+                        //客服小休
+                        case 'serverBreak':
+                            content = '客服小休'
+                            break;
+                        //客服离线
+                        case 'serverLeave':
+                            content = '客服离线'
+                            break;
+                        //客服会话超时
+                        case 'serverTimeOut':
+                            content = '客服会话超时'
+                            break;
+                        //客服下班提醒
+                        case 'serverOffLineRemind':
+                            content = '客服下班提醒'
+                            break;
+                        //会话建立
+                        case 'sessionStart':
+                            content = item.content
+                            $content.find('.J-queuing-number').text(0)
+                            //将所有排队容器的排队标志去除
+                            $content.find('.J-run-queue').removeClass('.J-run-queue')
+                            chatStatus = 'yunzaixian'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //会话转接
+                        case 'sessionSwitch':
+                            content = '会话转接'
+                            chatStatus = 'yunzaixian'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //会话关闭
+                        case 'sessionClosed':
+                            content = '会话关闭'
+                            //停止轮询
+                            chatStatus = 'xiaobao'
+                            clearTimeout(beforeFetchMessageCl)
+                            $.get('/client/visitorOffline.json')
+                            break;
+                        //访客排队
+                        case 'queueWait':
+                            $content.find('.J-queuing-number').text(item.count)
+                            fetchMessage()
+                            break;
+                        //访客离开
+                        case 'userLeave':
+                            content = '访客离开'
+                            break;
+                        //访客超时提醒
+                        case 'userRemind':
+                            content = '访客超时提醒'
+                            break;
+                        //文本消息
+                        case 'text':
+                            content = '文本消息'
+                            chatStatus = 'yunzaixian'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //推送服务消息
+                        case 'PUSH_SERVICE':
+                            content = '推送服务消息'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //客服推送登录服务
+                        case 'NEED_LOGIN':
+                            content = 'NEED_LOGIN'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //访客登录成功
+                        case 'LOGIN_SUCCESS':
+                            content = '访客登录成功'
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 100)
+                            break;
+                        //访客拒绝登录
+                        case 'LOGIN_REFUSE':
+                            content = '访客拒绝登录'
+                            break;
+                        //访客登录失败
+                        case 'LOGIN_FAIL':
+                            content = '访客登录失败'
+                            break;
+                    }
+                    if (content !== undefined) {
+                        addPopup({
+                            status: 'server',
+                            content: content
+                        })
+                    }
+                })
+            })
+            .error(function () {
+                //todo:出错次数超出阈值时取消
+                beforeFetchMessageCl = setTimeout(function () {
+                    fetchMessage()
+                }, 100)
+            })
+    }
+
+    //当切换到人工在线客服的时候
+    $(document).on('click', '.J-switch-to-yun-zaixian', function () {
+        $content.append(queueTpl({queuingNumber: '...'}))
+        $('#artificial-service').hide()
+        $content.css({bottom: 1})
+        $content.stop().animate({scrollTop: $content[0].scrollHeight})
+        chatStatus = 'waitYunzaixian'
+        fetchMessage()
+    })
+
+    //当显示了转人工的浮层或其他诸如此类的高度改变时
+    //重新调整chat框框的高度
+    function changeUI() {
+
+    }
 
     /*当提交表单的时候*/
     $survey.on('submit', function (ev) {
         ev.preventDefault()
+
+        if (chatStatus === 'waitYunzaixian') return
+
         var value = survey.elements['content'].value
         sendMessage(value, function () {
             survey.elements['content'].value = ''
@@ -195,6 +361,7 @@ define(function (require, exports, module) {
         countTextareaLeft()
         if (ev.keyCode !== 13) return;
         ev.preventDefault()
+        if (chatStatus === 'waitYunzaixian') return
         var value = this.value
         var self = this
         sendMessage(value, function () {
