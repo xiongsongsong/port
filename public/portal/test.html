@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="./main/reset.css"/>
+    <link rel="stylesheet" href="./main/main.css"/>
+    <link rel="stylesheet" href="http://aralejs.org/autocomplete/src/autocomplete.css"/>
+</head>
+<body>
+
+<!--顶层容器，高宽在这里指定-->
+<div id="wrapper">
+    <!--冗余标签-->
+    <div id="container">
+        <!--主栏-->
+        <div id="main">
+            <div id="output-wrapper">
+                <div id="output-content">
+                    <!--
+                            公告
+                    -->
+                    <div class="notify">
+                        【公告】亲爱的客户您好，因系统升级引起13-15日成长点未及时发放，会在12月31日前完成补发。（12-15期间有过交易的当日，每人补发150点/日）
+                    </div>
+                    <!--
+                            item是每次对话的外部标识
+                            server      表示服务器返回的信息
+                            user        表示用户发送的信息
+                            application 代表系统通知
+                    -->
+                    <div class="server"><h2><span class="header"><b class="nick">小宝</b><b class="time">08 : 22</b></span><a class="avatar"><img src="./main/img/avatar.png"></a></h2><div class="content"></div></div>
+                    <div class="server">
+                        <h2>
+                            <span class="header">
+                                <b class="nick">小宝</b>
+                                <b class="time">08 : 22</b>
+                            </span>
+                            <a class="avatar"><img src="./main/img/avatar.png"></a>
+                        </h2>
+
+                        <div class="content">
+                            <p>您好，请问有什么可以帮您的吗？</p>
+
+                            <div class="question-list">
+                                <ul>
+                                    <li><a href="#">实名认证操作流程</a></li>
+                                    <li><a href="#">钱包新登用户免单活动</a></li>
+                                </ul>
+                                <p class="more">
+                                    <a class="more" href="">更多<s></s></a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <!--排队的容器-->
+                    <div class="queue">
+                        <div class="title">正在为您转到人工服务</div>
+                        <div class="info">还有32人正在排队</div>
+                    </div>
+                    <!--服务器返回有选择的情况-->
+                    <div class="server">
+                        <h2>
+                            <span class="header">
+                                <b class="nick">小宝</b>
+                                <b class="time">08 : 22</b>
+                            </span>
+                            <a class="avatar"><img src="./main/img/avatar.png"></a>
+                        </h2>
+
+                        <div class="content">
+                            <p>您好，请问有什么可以帮您的吗？</p>
+
+                            <p>
+                                <a href="#" class="btn btn-normal">好，我要登陆</a>　　<a href="#"
+                                                                                  class="btn btn-normal">我不是会员</a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="client" style="padding-bottom:12px">
+                        <h2>
+                            <span class="header">0：30 我</span>
+                            <a class="avatar"><img src="./main/img/avatar.png"></a>
+                        </h2>
+
+                        <div class="content">实名认证怎么<br><br><br><br>名认证怎么认证呢？</div>
+                    </div>
+                </div>
+                <!--<div id="artificial-service">
+                    <p><s></s><span class="text">以上回答有帮助到您吗？</span><a class="btn btn-normal">有</a><a
+                            class="btn btn-normal">没有，转人工</a></p>
+                </div>-->
+            </div>
+            <div id="input-wrapper">
+                <div id="input-content">
+                    <form action="#" name="survey">
+                        <div class="input">
+                            <div id="input-field"><textarea name="content" maxlength="200"
+                                                            placeholder="请用一句话准确的描述你的问题，例如“网银如何支付”"></textarea></div>
+                        </div>
+
+                        <p class="tips">[发送快捷键:Enter]:您还可以输入 <span class="J-left">200</span>个字，请输入简体中文哦</p>
+                        <input type="submit" class="submit" value="发送信息">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--侧边栏-->
+        <div id="sidebar">
+            <img src="./main/img/tips.png" alt=""/>
+
+            <div class="shortcut-menu">
+                <h2>自助服务</h2>
+                <ul>
+                    <li><a href="#"><img src="./main/img/1.png" alt=""/><span>找回登录密码</span></a></li>
+                    <li><a href="#"><img src="./main/img/2.png" alt=""/><span>找回支付密码</span></a></li>
+                    <li><a href="#"><img src="./main/img/3.png" alt=""/><span>更换手机绑定</span></a></li>
+                    <li><a href="#"><img src="./main/img/4.png" alt=""/><span>修改登录名</span></a></li>
+                    <li><a href="#"><img src="./main/img/5.png" alt=""/><span>取消数字证书</span></a></li>
+                    <li class="more"><a href="#">更多&gt;</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="mask"></div>
+<!--结束服务时的调查统计-->
+<div id="commend-wrapper" class="hide">
+    <div id="commend-content">
+        <h2>给我们提点意见让我们做的更好</h2>
+
+        <div class="hr"></div>
+        <form method="get">
+            <p>
+                <label for="survey_1">
+                    <span class="checkbox">
+                        <input type="checkbox" id="survey_1" name="1" value="客服态度不好"/>
+                    </span>
+                    <span class="value"><s></s>客服态度不好</span>
+                </label>
+            </p>
+
+            <p>
+                <label for="survey_2">
+                    <span class="checkbox">
+                        <input type="checkbox" id="survey_2" name="1" value="客服态度不好"/>
+                    </span>
+                    <span class="value"><s></s>客服给的答案没有解决我的问题</span>
+                </label>
+            </p>
+
+            <p>
+                <label for="survey_3">
+                    <span class="checkbox">
+                        <input type="checkbox" id="survey_3" name="1" value="客服态度不好"/>
+                    </span>
+                    <span class="value"><s></s>客服给的答案太复杂</span>
+                </label>
+            </p>
+
+            <p>
+                <label for="survey_4">
+                    <span class="checkbox">
+                        <input type="checkbox" id="survey_4" name="1" value="客服态度不好"/>
+                    </span>
+                    <span class="value"><s></s>产品不好用</span>
+                </label>
+                <span class="text">到建议平台给我们产品经理提建议。<br>
+                <a class="go" href="/">立即去</a></span>
+            </p>
+
+            <p>
+                <label for="survey_5">
+                    <span class="checkbox">
+                        <input type="checkbox" id="survey_5" name="1" value="其他"/>
+                    </span>
+                    <span class="value"><s></s>其它</span>
+                </label>
+                <textarea name="" id="" cols="30" rows="10" placeholder="其他问题"></textarea>
+            </p>
+
+            <p>
+                <input type="submit" class="smt" value="提交"/>
+            </p>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    try {
+        var oldDomain = document.domain;
+        var num = oldDomain.indexOf('alipay');
+        var newDomain = oldDomain.substring(num, oldDomain.length)
+        document.domain = newDomain;
+    } catch (msg) {
+        document.domain = 'alipay.com';
+    }
+</script>
+<script type="text/javascript" charset="utf-8" src="https://a.alipayobjects.com/seajs/1.3.1/sea.js"></script>
+<script>
+    seajs.config({
+        alias: {
+            '~': 'http://a.alipayobjects.com',
+            '$': 'jquery/jquery/1.7.2/jquery',
+            '$-debug': 'jquery/jquery/1.7.2/jquery-debug',
+            'xbox': 'http://a.alipayobjects.com/alipay/xbox/1.0.1/xbox',
+            'light': 'http://a.alipayobjects.com/ar/??alipay.light.base-1.6-src.js,alipay.light.page-1.7-sizzle-src.js',
+            'bizdev': 'http://a.alipayobjects.com/ar/alipay.bizdev-1.6-src.js',
+            'sys': 'http://a.alipayobjects.com/csmng/csmng.page-1.0-src.js',
+            'handlebars': 'http://assets.dev.alipay.net/gallery/handlebars/1.0.2/handlebars.js',
+            'autocomplete': 'https://a.alipayobjects.com/arale/autocomplete/1.2.3/autocomplete.js'
+        }
+    });
+
+    seajs.use(['./main/init', 'alipay/xbox/1.1.2/xbox', '$', 'handlebars', 'autocomplete'], function (INIT, Xbox, $, Handlebars, AutoComplete) {
+
+    })
+
+</script>
+</body>
+</html>
