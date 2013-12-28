@@ -39,12 +39,16 @@ define(function (require, exports, module) {
         '<h2><span class="header"><b class="nick">小宝</b> ' +
         '<b class="time"> {{hour}}:{{minute}}</b>' +
         '</span><a class="avatar"><img src="./main/img/avatar.png"></a>' +
-        '</h2><div class="content">{{content}}</div>' +
+        '</h2><div class="content">搜索结果：<ul>' +
+        '{{#each content}} <li>{{@index}}.{{this}}</li> {{else}} Nothing {{/each}}' +
+        '</ul></div>' +
         '</div>')
 
     //排队的模板
     var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您转到人工服务</div>' +
-        '<div class="info">还有<span class="J-queuing-number">{{queuingNumber}}</span>人正在排队</div></div>')
+        '<div class="info">还有<span class="J-queuing-number">{{queuingNumber}}</span>人正在排队</div>' +
+        '<a href="#"></a>' +
+        '</div>')
 
     /*添加一个气泡*/
     function addPopup(data) {
@@ -120,6 +124,7 @@ define(function (require, exports, module) {
                     status: 'server',
                     content: data.info.reply
                 })
+                console.log(data.info.skillGroup)
                 if (parseInt(data.info.skillGroup, 10) > 3) {
                     $('#artificial-service').show()
                     $content.css({bottom: $('#artificial-service').height() - 1})
@@ -242,7 +247,7 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //会话转接
                         case 'sessionSwitch':
@@ -250,7 +255,7 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //会话关闭
                         case 'sessionClosed':
@@ -279,28 +284,28 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //推送服务消息
                         case 'PUSH_SERVICE':
                             content = '推送服务消息'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //客服推送登录服务
                         case 'NEED_LOGIN':
                             content = 'NEED_LOGIN'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //访客登录成功
                         case 'LOGIN_SUCCESS':
                             content = '访客登录成功'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 100)
+                            }, 2000)
                             break;
                         //访客拒绝登录
                         case 'LOGIN_REFUSE':
@@ -323,10 +328,37 @@ define(function (require, exports, module) {
                 //todo:出错次数超出阈值时取消
                 beforeFetchMessageCl = setTimeout(function () {
                     fetchMessage()
-                }, 100)
+                }, 2000)
             })
     }
 
+    //当和云在线沟通后，保持绘画链接
+    function keepAlive() {
+        $.ajax({
+            url: '/keepAlive.json',
+            dataType: 'json',
+            data: {
+                //r是临时参数，本地测试使用
+                r: Date.now(),
+                token: '6a58013c7d2942459a63282f3d3172ed',
+                t: 1388045535760,
+                _input_charset: 'utf-8',
+                language: 1,
+                instanceId: 1,
+                serviceToken: 'b21b38a97ff14a5983c13bd66d3b3ac1000'
+            }
+        }).success(function (data) {
+                console.log('保持会话，结果：' + data)
+            })
+    }
+
+    setInterval(function () {
+        //只要是云在线状态，则进行会话状态维持
+        if (chatStatus === 'yunzaixian') {
+            console.log('尝试保存会话')
+            keepAlive()
+        }
+    }, 90000)
     //当切换到人工在线客服的时候
     $(document).on('click', '.J-switch-to-yun-zaixian', function () {
         $content.append(queueTpl({queuingNumber: '...'}))
@@ -383,7 +415,8 @@ define(function (require, exports, module) {
     /*自动提示*/
     new AutoComplete({
         trigger: survey.elements['content'],
-        dataSource: ['abc', 'abd', 'cbd', 'effff', 'y1', 'y2', 'y4', 'j4ghsd'],
+        dataSource: 'http://sug.so.360.cn/suggest/word?word={{query}}&t={{timestamp}}&encodein=utf-8&encodeout=utf-8',
+        locator: 's',
         align: {
             selfXY: ['0', '100%'],
             baseXY: ['0', '-10%']

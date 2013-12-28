@@ -84,21 +84,49 @@ app.get('/inputSuggest.json', function (req, res) {
 })
 
 //在人工开始之前的对话请求，注意：一旦人工开始后，就改用fetchMessage抓取消息
+var BufferHelper = require('bufferhelper');
 app.get('/guideQuestion.json', function (req, res) {
     res.header('content-type', 'application/json;charset=utf-8')
-    var count = addSkillGroupCount(req)
-    var data = {
-        time: Date.now(),
-        "stat": "ok",
-        "info": {
-            "reply": '第' + (count + 1) + '次交谈（满4次弹出转人工面板），您说了：' + req.query.question.split('').reverse().join(''),
-            "skillGroup": count.toString()
-        }
-    }
-    res.header('content-type', 'application/javascript;charset=utf-8')
-    setTimeout(function () {
-        res.end(req.query._callback + '(' + JSON.stringify(data, undefined, '  ') + ')')
-    }, Math.random() * 1000)
+
+
+    var http = require('http')
+    var bufferHelper = new BufferHelper();
+
+    var a = http.get("http://sug.so.360.cn/suggest/word?word=" + req.query.question + "&callback=abc&encodein=utf-8&encodeout=utf-8", function (response) {
+        console.log("Got response: " + res.statusCode);
+
+        response.on('data', function (chunk) {
+            bufferHelper.concat(chunk);
+        })
+
+        response.on('end', function () {
+            var count = addSkillGroupCount(req)
+            console.log(bufferHelper.toBuffer().toString())
+
+            var json = bufferHelper.toBuffer().toString()
+            json = json.substring(json.indexOf('['), json.lastIndexOf(']') + 1)
+            try {
+                json = eval('(' + json + ')')
+            } catch (e) {
+                console.log(e)
+                json = '{"s": ["Not Found"]}'
+            }
+
+            var data = {
+                time: Date.now(),
+                "stat": "ok",
+                "info": {
+                    "reply": json,
+                    "skillGroup": count.toString()
+                }
+            }
+            res.header('content-type', 'application/javascript;charset=utf-8')
+            res.end(req.query._callback + '(' + JSON.stringify(data, undefined, '  ') + ')')
+        })
+
+    })
+
+
 })
 
 
@@ -132,11 +160,13 @@ app.get('/client/connectServer.json', function (req, res) {
 
 function 模拟排队(req) {
 
-    if (!req.session.queue) {
-        req.session.queue = 5 + parseInt(Math.random() * 10, 10)
+    console.log('模拟排队的queue检查,当前值', req.session.queue)
+    if (typeof req.session.queue !== 'number') {
+        req.session.queue = 2 + parseInt(Math.random() * 10, 10)
     } else {
-        req.session.queue = req.session.queue - (Math.random() > .3 ? 1 : 2)
+        req.session.queue = req.session.queue - (Math.random() > .3 ? 2 : 1)
     }
+    console.log('模拟排队的queue检查，排队后的值', req.session.queue)
     return req.session.queue
 }
 
@@ -173,7 +203,7 @@ app.get('/fetchMessage.json', function (req, res) {
     var data2 = [
         {
             count: queue,
-            "bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>您问我" + req.query.content,
+            "bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>" + queue + '后次会话关闭',
             "email": "", "encryptVisitorId": "",
             "extValues": {
                 "contextToken": "d419f135176e4990a7f218c3448f21fd003",
@@ -211,7 +241,7 @@ app.get('/fetchMessage.json', function (req, res) {
         } else if (queue < -10) {
             res.end(JSON.stringify(data3))
         }
-    }, 1500)
+    }, Math.random() * 2500)
 })
 
 //当cmd返回sessionStart的时候，client可以开始调用sendMessage接口，第一次调用的时候，客户端必须将之前问的问题全部发送过来。
@@ -233,9 +263,16 @@ app.post('/sendMessage.json', function (req, res) {
 })
 
 
+//保持会话状态
+app.get('/keepAlive.json', function (req, res) {
+    console.log('保持会话后req.session.queue的值', req.session.queue)
+    res.end(JSON.stringify(req.session))
+})
+
+
 //结束会话
 app.get('/client/visitorOffline.json', function (req, res) {
-    req.session.queue = 23
+    req.session.queue = 2 + parseInt(Math.random() * 10, 10)
     req.session.skillGroupCount = 0
     res.json({"msg": "处理成功", "stat": "ok"})
 })
