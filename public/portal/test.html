@@ -2,10 +2,19 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <title></title>
+    <meta http-equiv="x-ua-compatible" content="IE=edge">
+    <title>模拟聊天对话窗口</title>
     <link rel="stylesheet" href="./main/reset.css"/>
     <link rel="stylesheet" href="./main/main.css"/>
     <link rel="stylesheet" href="http://aralejs.org/autocomplete/src/autocomplete.css"/>
+    <script>
+        if (!window.console) {
+            window.console = {
+                log: function () {
+                }
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -16,82 +25,86 @@
         <!--主栏-->
         <div id="main">
             <div id="output-wrapper">
-                <div id="output-content">
-                    <!--
-                            公告
-                    -->
-                    <div class="notify">
-                        【公告】亲爱的客户您好，因系统升级引起13-15日成长点未及时发放，会在12月31日前完成补发。（12-15期间有过交易的当日，每人补发150点/日）
-                    </div>
-                    <!--
-                            item是每次对话的外部标识
-                            server      表示服务器返回的信息
-                            user        表示用户发送的信息
-                            application 代表系统通知
-                    -->
-                    <div class="server"><h2><span class="header"><b class="nick">小宝</b><b class="time">08 :
-                        22</b></span><a class="avatar"><img src="./main/img/avatar.png"></a></h2>
+                <div id="output-container">
+                    <span class="inputing">对方正在输入...</span>
 
-                        <div class="content">Hello，我是机器人小宝，这里是首问语。</div>
-                    </div>
-                    <!--<div class="server">
-                        <h2>
-                            <span class="header">
-                                <b class="nick">小宝</b>
-                                <b class="time">08 : 22</b>
-                            </span>
-                            <a class="avatar"><img src="./main/img/avatar.png"></a>
-                        </h2>
+                    <div id="output-content">
+                        <!--
+                                公告
+                        -->
+                        <div class="notify">
+                            【公告】亲爱的客户您好，因系统升级引起13-15日成长点未及时发放，会在12月31日前完成补发。（12-15期间有过交易的当日，每人补发150点/日）
+                        </div>
+                        <!--
+                                item是每次对话的外部标识
+                                server      表示服务器返回的信息
+                                user        表示用户发送的信息
+                                application 代表系统通知
+                        -->
+                        <div class="server"><h2><span class="header"><b class="nick">小宝</b><b class="time">08 :
+                            22</b></span><a class="avatar"><img src="./main/img/avatar.png"></a></h2>
 
-                        <div class="content">
-                            <p>您好，请问有什么可以帮您的吗？</p>
+                            <div class="content">Hello，我是机器人小宝，这里是首问语。</div>
+                        </div>
+                        <!--<div class="server">
+                            <h2>
+                                <span class="header">
+                                    <b class="nick">小宝</b>
+                                    <b class="time">08 : 22</b>
+                                </span>
+                                <a class="avatar"><img src="./main/img/avatar.png"></a>
+                            </h2>
 
-                            <div class="question-list">
-                                <ul>
-                                    <li><a href="#">实名认证操作流程</a></li>
-                                    <li><a href="#">钱包新登用户免单活动</a></li>
-                                </ul>
-                                <p class="more">
-                                    <a class="more" href="">更多<s></s></a>
+                            <div class="content">
+                                <p>您好，请问有什么可以帮您的吗？</p>
+
+                                <div class="question-list">
+                                    <ul>
+                                        <li><a href="#">实名认证操作流程</a></li>
+                                        <li><a href="#">钱包新登用户免单活动</a></li>
+                                    </ul>
+                                    <p class="more">
+                                        <a class="more" href="">更多<s></s></a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>-->
+                        <!--排队的容器-->
+                        <!--<div class="queue">
+                            <div class="title">正在为您转到人工服务</div>
+                            <div class="info">还有32人正在排队</div>
+                        </div>-->
+                        <!--服务器返回有选择的情况-->
+                        <!--<div class="server">
+                            <h2>
+                                <span class="header">
+                                    <b class="nick">小宝</b>
+                                    <b class="time">08 : 22</b>
+                                </span>
+                                <a class="avatar"><img src="./main/img/avatar.png"></a>
+                            </h2>
+
+                            <div class="content">
+                                <p>您好，请问有什么可以帮您的吗？</p>
+
+                                <p>
+                                    <a href="#" class="btn btn-normal">好，我要登陆</a>　　<a href="#"
+                                                                                      class="btn btn-normal">我不是会员</a>
                                 </p>
                             </div>
                         </div>
-                    </div>-->
-                    <!--排队的容器-->
-                    <!--<div class="queue">
-                        <div class="title">正在为您转到人工服务</div>
-                        <div class="info">还有32人正在排队</div>
-                    </div>-->
-                    <!--服务器返回有选择的情况-->
-                    <!--<div class="server">
-                        <h2>
-                            <span class="header">
-                                <b class="nick">小宝</b>
-                                <b class="time">08 : 22</b>
-                            </span>
-                            <a class="avatar"><img src="./main/img/avatar.png"></a>
-                        </h2>
+                        <div class="client" style="padding-bottom:12px">
+                            <h2>
+                                <span class="header">0：30 我</span>
+                                <a class="avatar"><img src="./main/img/avatar.png"></a>
+                            </h2>
 
-                        <div class="content">
-                            <p>您好，请问有什么可以帮您的吗？</p>
-
-                            <p>
-                                <a href="#" class="btn btn-normal">好，我要登陆</a>　　<a href="#"
-                                                                                  class="btn btn-normal">我不是会员</a>
-                            </p>
-                        </div>
+                            <div class="content">实名认证怎么<br><br><br><br>名认证怎么认证呢？</div>
+                        </div>-->
                     </div>
-                    <div class="client" style="padding-bottom:12px">
-                        <h2>
-                            <span class="header">0：30 我</span>
-                            <a class="avatar"><img src="./main/img/avatar.png"></a>
-                        </h2>
-
-                        <div class="content">实名认证怎么<br><br><br><br>名认证怎么认证呢？</div>
-                    </div>-->
                 </div>
                 <div id="artificial-service" style="display: none;">
-                    <p><s></s><span class="text">以上回答有帮助到您吗？</span><a class="btn btn-normal">有</a><a
+                    <p><s></s><span class="text">以上回答有帮助到您吗？</span><a class="btn btn-normal J-helpful">有</a><a
                             class="btn btn-normal J-switch-to-yun-zaixian">没有，转人工</a></p>
                 </div>
             </div>
@@ -116,12 +129,12 @@
             <div class="shortcut-menu">
                 <h2>自助服务</h2>
                 <ul>
-                    <li><a href="#"><img src="./main/img/1.png" alt=""/><span>找回登录密码</span></a></li>
-                    <li><a href="#"><img src="./main/img/2.png" alt=""/><span>找回支付密码</span></a></li>
-                    <li><a href="#"><img src="./main/img/3.png" alt=""/><span>更换手机绑定</span></a></li>
-                    <li><a href="#"><img src="./main/img/4.png" alt=""/><span>修改登录名</span></a></li>
-                    <li><a href="#"><img src="./main/img/5.png" alt=""/><span>取消数字证书</span></a></li>
-                    <li class="more"><a href="#">更多&gt;</a></li>
+                    <li><a href="#" target="_blank"><img src="./main/img/1.png" alt=""/><span>找回登录密码</span></a></li>
+                    <li><a href="#" target="_blank"><img src="./main/img/2.png" alt=""/><span>找回支付密码</span></a></li>
+                    <li><a href="#" target="_blank"><img src="./main/img/3.png" alt=""/><span>更换手机绑定</span></a></li>
+                    <li><a href="#" target="_blank"><img src="./main/img/4.png" alt=""/><span>修改登录名</span></a></li>
+                    <li><a href="#" target="_blank"><img src="./main/img/5.png" alt=""/><span>取消数字证书</span></a></li>
+                    <li class="more" target="_blank"><a href="#">更多&gt;</a></li>
                 </ul>
             </div>
         </div>
@@ -171,7 +184,7 @@
                     <span class="value"><s></s>产品不好用</span>
                 </label>
                 <span class="text">到建议平台给我们产品经理提建议。<br>
-                <a class="go" href="/">立即去</a></span>
+                <a class="go click_egg" href="/">立即去</a></span>
             </p>
 
             <p>

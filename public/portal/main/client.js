@@ -16,6 +16,7 @@ define(function (require, exports, module) {
     var Handlebars = require('handlebars')
     var survey = document.forms['survey']
     var $survey = $(survey)
+    var $contentWrapper = $('#output-container')
     var $content = $('#output-content')
     //当前聊天模式
     //xiaobao:智能机器人聊天
@@ -39,13 +40,13 @@ define(function (require, exports, module) {
         '<h2><span class="header"><b class="nick">小宝</b> ' +
         '<b class="time"> {{hour}}:{{minute}}</b>' +
         '</span><a class="avatar"><img src="./main/img/avatar.png"></a>' +
-        '</h2><div class="content">搜索结果：<ul>' +
-        '{{#each content}} <li>{{@index}}.{{this}}</li> {{else}} Nothing {{/each}}' +
+        '</h2><div class="content"><ul>' +
+        '{{#each content}} <li>{{this}}</li> {{else}} Nothing {{/each}}' +
         '</ul></div>' +
         '</div>')
 
     //排队的模板
-    var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您转到人工服务</div>' +
+    var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您转到高级人工客服</div>' +
         '<div class="info">还有<span class="J-queuing-number">{{queuingNumber}}</span>人正在排队</div>' +
         '<a href="#"></a>' +
         '</div>')
@@ -127,7 +128,7 @@ define(function (require, exports, module) {
                 console.log(data.info.skillGroup)
                 if (parseInt(data.info.skillGroup, 10) > 3) {
                     $('#artificial-service').show()
-                    $content.css({bottom: $('#artificial-service').height() - 1})
+                    $contentWrapper.css({bottom: $('#artificial-service').height() - 1})
                 }
             }).error(function () {
 
@@ -215,6 +216,7 @@ define(function (require, exports, module) {
         $.ajax({
             url: '/fetchMessage.json',
             type: 'get',
+            cache: false,
             dataType: 'json',
             data: param
         }).success(function (data) {
@@ -247,7 +249,7 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //会话转接
                         case 'sessionSwitch':
@@ -255,7 +257,7 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //会话关闭
                         case 'sessionClosed':
@@ -268,7 +270,9 @@ define(function (require, exports, module) {
                         //访客排队
                         case 'queueWait':
                             $content.find('.J-queuing-number').text(item.count)
-                            fetchMessage()
+                            beforeFetchMessageCl = setTimeout(function () {
+                                fetchMessage()
+                            }, 1000 + Math.random() * 500)
                             break;
                         //访客离开
                         case 'userLeave':
@@ -284,28 +288,28 @@ define(function (require, exports, module) {
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //推送服务消息
                         case 'PUSH_SERVICE':
                             content = '推送服务消息'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //客服推送登录服务
                         case 'NEED_LOGIN':
                             content = 'NEED_LOGIN'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //访客登录成功
                         case 'LOGIN_SUCCESS':
                             content = '访客登录成功'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 2000)
+                            }, 1000 + Math.random() * 500)
                             break;
                         //访客拒绝登录
                         case 'LOGIN_REFUSE':
@@ -319,7 +323,7 @@ define(function (require, exports, module) {
                     if (content !== undefined) {
                         addPopup({
                             status: 'server',
-                            content: content
+                            content: item.s
                         })
                     }
                 })
@@ -328,7 +332,7 @@ define(function (require, exports, module) {
                 //todo:出错次数超出阈值时取消
                 beforeFetchMessageCl = setTimeout(function () {
                     fetchMessage()
-                }, 2000)
+                }, 1000 + Math.random() * 500)
             })
     }
 
@@ -363,7 +367,7 @@ define(function (require, exports, module) {
     $(document).on('click', '.J-switch-to-yun-zaixian', function () {
         $content.append(queueTpl({queuingNumber: '...'}))
         $('#artificial-service').hide()
-        $content.css({bottom: 1})
+        $contentWrapper.css({bottom: 1})
         $content.stop().animate({scrollTop: $content[0].scrollHeight})
         chatStatus = 'waitYunzaixian'
         fetchMessage()
@@ -412,6 +416,17 @@ define(function (require, exports, module) {
         $survey.find('.J-left').text(200 - survey.elements['content'].value.length)
     }
 
+    /*当点击服务器返回的list的时候，发送消息出去*/
+    $content.on('click', '#output-content li', function (ev) {
+        sendMessage($(ev.currentTarget).text())
+    })
+
+    /*点击有帮助时，关闭浮层*/
+    $('.J-helpful').on('click', function () {
+        $('#artificial-service').hide()
+        $contentWrapper.css({bottom: 1})
+    })
+
     /*自动提示*/
     new AutoComplete({
         trigger: survey.elements['content'],
@@ -421,7 +436,11 @@ define(function (require, exports, module) {
             selfXY: ['0', '100%'],
             baseXY: ['0', '-10%']
         }
-    }).render();
+    }).render().on('itemSelect', function (ev) {
+            sendMessage(ev.matchKey, function () {
+                survey.elements['content'].value = ''
+            })
+        });
 
 
 })

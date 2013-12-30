@@ -121,7 +121,9 @@ app.get('/guideQuestion.json', function (req, res) {
                 }
             }
             res.header('content-type', 'application/javascript;charset=utf-8')
-            res.end(req.query._callback + '(' + JSON.stringify(data, undefined, '  ') + ')')
+            setTimeout(function () {
+                res.end(req.query._callback + '(' + JSON.stringify(data, undefined, '  ') + ')')
+            }, 1000 + Math.random() * 500)
         })
 
     })
@@ -182,12 +184,7 @@ app.get('/fetchMessage.json', function (req, res) {
         {
             "bankCardNo": "",
             "cmd": "queueWait",
-            "content": "您前面还有<font color=\"#ff6600\"><span style=\"BACKGROUND-COLOR: rgb(255,255,255); COLOR: rgb(255,153,0)\">'+queue+'<\/span><\/font>位访客正在等候服务，预计需等" +
-                "<font color=\"#ff6600\"><span style=\"BACKGROUND-COLOR: rgb(255,255,255); COLOR: rgb(255,153,0)\">1<\/span><\/font>分钟,请稍候！\n<br><br>" +
-                "<font color=\"#ff9900\">【温馨提示】<\/font>排队高峰期，建议您先咨询 " +
-                "<font color=\"#0000ff\"><a href=\"#\" class=\"J_ResumeRobot\">智能小宝<\/a><\/font>." +
-                "<br>（<font color=\"#ff9900\">余额宝问题 <\/font>" +
-                "<a href=\"http://help.alipay.com/lab/help_detail.htm?help_id=257308\" target=\"_blank\">点此查看<\/a>）",
+            "content": "",
             "count": queue,
             "email": "",
             "encryptVisitorId": "",
@@ -200,20 +197,6 @@ app.get('/fetchMessage.json', function (req, res) {
             "visitorToken": "0e4a76f53c4f446b9d414532e8ef452e"}
     ]
 
-    var data2 = [
-        {
-            count: queue,
-            "bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>" + queue + '后次会话关闭',
-            "email": "", "encryptVisitorId": "",
-            "extValues": {
-                "contextToken": "d419f135176e4990a7f218c3448f21fd003",
-                "msg_id": "0bd90", "msg_code": "CONVERSATION_CONNECT"
-            },
-            "identify": false, "logonId": "", "mid": "0bd90", "reasonFlag": 0, "serverName": "云在线10888",
-            "sid": "d419f135176e4990a7f218c3448f21fd003", "uname": "", "visitorId": "",
-            "visitorToken": "6a58013c7d2942459a63282f3d3172ed"
-        }
-    ]
 
     var data3 = [
         {
@@ -231,22 +214,35 @@ app.get('/fetchMessage.json', function (req, res) {
             "visitorToken": "6a58013c7d2942459a63282f3d3172ed"
         }
     ]
-
-
-    setTimeout(function () {
-        if (queue > 0) {
-            res.end(JSON.stringify(data))
-        } else if (queue <= 0 && queue >= -20) {
-            res.end(JSON.stringify(data2))
-        } else if (queue < -10) {
-            res.end(JSON.stringify(data3))
-        }
-    }, Math.random() * 2500)
+    if (queue > 0) {
+        res.end(JSON.stringify(data))
+    } else if (queue <= 0 && queue >= -20) {
+        res.end(JSON.stringify([
+            {
+                /*非官方字段开始*/
+                s: ['云客服在线001：您最近说：' + req.session.content ],
+                /*非官方字段结束*/
+                reply: [ queue],
+                "bankCardNo": "", "cmd": "sessionStart", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>" + queue + '后次会话关闭',
+                "email": "", "encryptVisitorId": "",
+                "extValues": {
+                    "contextToken": "d419f135176e4990a7f218c3448f21fd003",
+                    "msg_id": "0bd90", "msg_code": "CONVERSATION_CONNECT"
+                },
+                "identify": false, "logonId": "", "mid": "0bd90", "reasonFlag": 0, "serverName": "云在线10888",
+                "sid": "d419f135176e4990a7f218c3448f21fd003", "uname": "", "visitorId": "",
+                "visitorToken": "6a58013c7d2942459a63282f3d3172ed"
+            }
+        ]))
+    } else if (queue < -10) {
+        res.end(JSON.stringify(data3))
+    }
 })
 
 //当cmd返回sessionStart的时候，client可以开始调用sendMessage接口，第一次调用的时候，客户端必须将之前问的问题全部发送过来。
 app.post('/sendMessage.json', function (req, res) {
 
+    req.session.content = req.body.content
     var data = {
         "time": "2013-12-27 11:06:10",
         "sendMessageForm": {

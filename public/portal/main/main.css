@@ -159,6 +159,14 @@ body {
     overflow: auto;
 }
 
+#output-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
 #output-content .server,
 #output-content .client {
     position: relative;
@@ -215,8 +223,9 @@ body {
 
 #output-content .server h2 span.header {
     position: absolute;
-    left: 70px;
+    left: 90px;
     top: 0;
+    color: #999;
 }
 
 /*更多*/
@@ -259,8 +268,9 @@ body {
 
 #output-content .client h2 span.header {
     position: absolute;
-    right: 70px;
+    right: 90px;
     top: 0;
+    color: #999;
 }
 
 #output-content .client {
@@ -541,11 +551,31 @@ body {
 
 .ui-autocomplete {
     width: 534px;
+    font-size: 12px;
 }
 
 .ui-autocomplete-item {
-    width: auto!important;
+    width: auto !important;
 }
+
+/*测试使用，会被移除*/
+#output-content li {
+    cursor: pointer;
+}
+
+#output-content li:hover {
+    color: #f60;
+}
+
+.inputing {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    color: #999;
+    z-index: 9;
+}
+
+/*End*/
 
 ::-webkit-scrollbar {
     height: 8px;
