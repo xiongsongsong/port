@@ -226,7 +226,7 @@ app.get('/fetchMessage.json', function (req, res) {
                 s: ['云客服在线001：我打字快不快，您说：【' + req.session.content + '】我不懂' ],
                 /*非官方字段结束*/
                 reply: [ queue],
-                "bankCardNo": "", "cmd": "text", "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>" + queue + '后次会话关闭',
+                "bankCardNo": "", "cmd": (queue === 0 || queue === -1 ? 'sessionStart' : 'text'), "content": "您好，欢迎使用支付宝在线客服，我是测试云在线10888，很高兴为您服务。<br>" + queue + '后次会话关闭',
                 "email": "", "encryptVisitorId": "",
                 "extValues": {
                     "contextToken": "d419f135176e4990a7f218c3448f21fd003",

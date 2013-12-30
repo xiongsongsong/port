@@ -276,6 +276,10 @@ define(function (require, exports, module) {
                             //将所有排队容器的排队标志去除
                             $content.find('.J-run-queue').removeClass('.J-run-queue')
                             chatStatus = 'yunzaixian'
+                            addPopup({
+                                status: 'server',
+                                content: ['您好，我是[云客服：云裳，编号321]，很高兴为您服务。 ']
+                            })
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
                             }, 1000 + Math.random() * 500)
