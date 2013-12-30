@@ -5,7 +5,7 @@
     <meta http-equiv="x-ua-compatible" content="IE=edge">
     <title>模拟聊天对话窗口</title>
     <link rel="stylesheet" href="./main/reset.css"/>
-    <link rel="stylesheet" href="./main/main.css"/>
+    <link rel="stylesheet" href="./main/main.css?t=2.css"/>
     <link rel="stylesheet" href="http://aralejs.org/autocomplete/src/autocomplete.css"/>
     <script>
         if (!window.console) {
@@ -17,7 +17,6 @@
     </script>
 </head>
 <body>
-
 <!--顶层容器，高宽在这里指定-->
 <div id="wrapper">
     <!--冗余标签-->
@@ -26,15 +25,19 @@
         <div id="main">
             <div id="output-wrapper">
                 <div id="output-container">
-                    <span class="inputing">对方正在输入...</span>
+                    <span id="J-wait-input" class="inputing hide">对方正在输入...</span>
 
                     <div id="output-content">
                         <!--
                                 公告
                         -->
-                        <div class="notify">
-                            【公告】亲爱的客户您好，因系统升级引起13-15日成长点未及时发放，会在12月31日前完成补发。（12-15期间有过交易的当日，每人补发150点/日）
+                        <div class="notify" id="global-notify">
+                            <div class="content">
+                                【公告】亲爱的客户您好，因系统升级引起13-15日成长点未及时发放，会在12月31日前完成补发。（12-15期间有过交易的当日，每人补发150点/日）
+                                <a class="close J-close-notify"></a>
+                            </div>
                         </div>
+                        <br>
                         <!--
                                 item是每次对话的外部标识
                                 server      表示服务器返回的信息
@@ -105,7 +108,7 @@
                 </div>
                 <div id="artificial-service" style="display: none;">
                     <p><s></s><span class="text">以上回答有帮助到您吗？</span><a class="btn btn-normal J-helpful">有</a><a
-                            class="btn btn-normal J-switch-to-yun-zaixian">没有，转人工</a></p>
+                            class="btn btn-normal J-switch-to-yun-zaixian">没有，转高级人工</a></p>
                 </div>
             </div>
             <div id="input-wrapper">

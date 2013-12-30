@@ -18,6 +18,7 @@ define(function (require, exports, module) {
     var $survey = $(survey)
     var $contentWrapper = $('#output-container')
     var $content = $('#output-content')
+    var $waitInput = $('#J-wait-input')
     //当前聊天模式
     //xiaobao:智能机器人聊天
     //yunzaixian:人工客服聊天模式
@@ -46,13 +47,17 @@ define(function (require, exports, module) {
         '</div>')
 
     //排队的模板
-    var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您转到高级人工客服</div>' +
+    var queueTpl = Handlebars.compile('<div class="queue J-run-queue"><div class="title">正在为您接通高级客服</div>' +
         '<div class="info">还有<span class="J-queuing-number">{{queuingNumber}}</span>人正在排队</div>' +
         '<a href="#"></a>' +
-        '</div>')
+        '</div><br><br>')
 
     /*添加一个气泡*/
     function addPopup(data) {
+
+        //如果当前在排队，则不接收服务器的通知
+        //保证排队提示在页面最底部
+        if (chatStatus === 'waitYunzaixian') return
 
         console.log('开始添加气泡，气泡状态', data.status)
         //todo:此处暂时用本地时间
@@ -84,12 +89,32 @@ define(function (require, exports, module) {
                     minute: minute,
                     content: data.content
                 }))
+                hideWaitInputTips()
                 break;
             case 'delaySendMessage':
-                $content.append('<div class="input-fast">您发送消息的频率过快</div>')
+                $content.append('<div class="system-output">您发送消息的频率过快</div>')
+                break;
+            case 'sessionClosed':
+                hideWaitInputTips()
+                $content.append('<div class="system-output">长时间未聊天，系统已自动关闭</div>')
                 break;
         }
         $content.stop().animate({scrollTop: $content[0].scrollHeight})
+    }
+
+    /*显示正在输入的提示框*/
+    function showWaitInputTips() {
+        clearTimeout($waitInput.data('cl'))
+        $waitInput.data('cl', setTimeout(function () {
+            if (chatStatus === 'waitYunzaixian') return
+            $waitInput.show()
+        }, 1800 + Math.random() * 1000))
+    }
+
+    /*隐藏正在输入的提示框*/
+    function hideWaitInputTips() {
+        clearTimeout($waitInput.data('cl'))
+        $waitInput.hide()
     }
 
     exports.addPopup = addPopup
@@ -99,6 +124,7 @@ define(function (require, exports, module) {
      * 当接口的skillGroup>N的时候，则开始转人工服务
      * */
     function guideQuestion(content, callback) {
+        showWaitInputTips()
         addPopup({
             status: 'chat',
             content: content
@@ -121,15 +147,18 @@ define(function (require, exports, module) {
                 serviceToken: 'b21b38a97ff14a5983c13bd66d3b3ac1000'
             }
         }).success(function (data) {
-                addPopup({
-                    status: 'server',
-                    content: data.info.reply
-                })
-                console.log(data.info.skillGroup)
-                if (parseInt(data.info.skillGroup, 10) > 3) {
-                    $('#artificial-service').show()
-                    $contentWrapper.css({bottom: $('#artificial-service').height() - 1})
-                }
+                setTimeout(function () {
+                    addPopup({
+                        status: 'server',
+                        content: data.info.reply
+                    })
+                    if (parseInt(data.info.skillGroup, 10) > 3 && chatStatus !== 'waitYunzaixian') {
+                        $('#artificial-service').show()
+                        $contentWrapper.css({bottom: $('#artificial-service').height() - 1})
+                    }
+                    hideWaitInputTips()
+                }, 2500 + Math.random() * 1000)
+
             }).error(function () {
 
             })
@@ -261,9 +290,11 @@ define(function (require, exports, module) {
                             break;
                         //会话关闭
                         case 'sessionClosed':
-                            content = '会话关闭'
-                            //停止轮询
                             chatStatus = 'xiaobao'
+                            addPopup({
+                                status: 'sessionClosed'
+                            })
+                            //停止轮询
                             clearTimeout(beforeFetchMessageCl)
                             $.get('/client/visitorOffline.json')
                             break;
@@ -289,6 +320,14 @@ define(function (require, exports, module) {
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
                             }, 1000 + Math.random() * 500)
+                            showWaitInputTips()
+                            setTimeout(function () {
+                                addPopup({
+                                    status: 'server',
+                                    content: item.s
+                                })
+                                hideWaitInputTips()
+                            }, 1000 + Math.random() * 100)
                             break;
                         //推送服务消息
                         case 'PUSH_SERVICE':
@@ -320,12 +359,7 @@ define(function (require, exports, module) {
                             content = '访客登录失败'
                             break;
                     }
-                    if (content !== undefined) {
-                        addPopup({
-                            status: 'server',
-                            content: item.s
-                        })
-                    }
+
                 })
             })
             .error(function () {
@@ -406,6 +440,7 @@ define(function (require, exports, module) {
         })
     })
 
+    /*统计剩余字数*/
     $(survey.elements['content']).on('keypress', function (ev) {
         setTimeout(function () {
             countTextareaLeft()
@@ -437,10 +472,18 @@ define(function (require, exports, module) {
             baseXY: ['0', '-10%']
         }
     }).render().on('itemSelect', function (ev) {
-            sendMessage(ev.matchKey, function () {
-                survey.elements['content'].value = ''
-            })
+            if (chatStatus !== 'waitYunzaixian') {
+                sendMessage(ev.matchKey, function () {
+                    survey.elements['content'].value = ''
+                })
+            } else {
+                survey.elements['content'].value = ev.matchKey
+            }
         });
 
+    /*关闭公告*/
+    $(document).on('click', '.J-close-notify', function () {
+        $('#global-notify').slideUp()
+    })
 
 })
