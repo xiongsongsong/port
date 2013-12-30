@@ -567,6 +567,7 @@ body {
 .ui-autocomplete {
     width: 534px;
     font-size: 12px;
+    border-radius: 3px;
 }
 
 .ui-autocomplete-item {

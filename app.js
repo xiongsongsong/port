@@ -40,7 +40,9 @@ function addSkillGroupCount(req) {
         console.log('init skillGroup++')
         req.session.skillGroupCount = req.session.skillGroupCount + 1
     }
-    return req.session.skillGroupCount
+    var count = req.session.skillGroupCount
+    if (count > 3)req.session.skillGroupCount = 0
+    return count
 }
 
 app.get('/mobile/similarQuestions.json', function (req, res) {
