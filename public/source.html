@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>123</title>
+</head>
+<body>
+<script type="text/javascript" charset="utf-8" src="https://a.alipayobjects.com/seajs/1.3.1/sea.js"></script>
+<script src="https://a.alipayobjects.com/u/js/201312/1k6EZScZ3F.js"></script>
+<script>
+    seajs.config({
+        alias: {
+            '~': 'http://a.alipayobjects.com',
+            '$': 'jquery/jquery/1.7.2/jquery',
+            '$-debug': 'jquery/jquery/1.7.2/jquery-debug',
+            'xbox': 'http://a.alipayobjects.com/alipay/xbox/1.0.1/xbox',
+            'light': 'http://a.alipayobjects.com/ar/??alipay.light.base-1.6-src.js,alipay.light.page-1.7-sizzle-src.js',
+            'bizdev': 'http://a.alipayobjects.com/ar/alipay.bizdev-1.6-src.js',
+            'sys': 'http://a.alipayobjects.com/csmng/csmng.page-1.0-src.js',
+            'handlebars': 'http://assets.dev.alipay.net/gallery/handlebars/1.0.2/handlebars.js',
+            'autocomplete': 'https://a.alipayobjects.com/arale/autocomplete/1.2.3/autocomplete.js'
+        }
+    });
+
+    seajs.use([  '$' ], function ($) {
+        console.log(window.PORTALSERVERCONFIG.preciseMatchURL)
+    })
+
+</script>
+<img src="https://i.alipayobjects.com/e/201305/JoBiQN2eL.png" style="position: fixed;right:12px;top:12px;">
+</body>
+</html>

@@ -7,23 +7,35 @@ define(function (require, exports, module) {
 
     var $ = require('$')
 
+    var Xbox = require('alipay/xbox/1.1.2/xbox')
+
 
     //页面刷新的时候，清空下状态
     $.get('/client/visitorOffline.json')
-
+    var $document = $(document)
 
     var AutoComplete = require('autocomplete')
     var Handlebars = require('handlebars')
     var survey = document.forms['survey']
     var $survey = $(survey)
+    /*对话框的外围容器*/
     var $contentWrapper = $('#output-container')
+    //存放对话节点的容器
     var $content = $('#output-content')
     var $waitInput = $('#J-wait-input')
+    //提交聊天form的按钮
+    var $submitBtn = $('#main-submit-btn')
     //当前聊天模式
     //xiaobao:智能机器人聊天
     //yunzaixian:人工客服聊天模式
     //waitYunzaixian 云在线排队状态
     var chatStatus = 'xiaobao'
+
+    /*
+     当fetchMessage抓取到受理单时，将返回的mid值放置在此变量上存储
+     在pushWindow的时候会携带上
+     */
+    var mid
 
     //判断消息发送频率
     var delaySendMessage = false
@@ -59,14 +71,13 @@ define(function (require, exports, module) {
         //保证排队提示在页面最底部
         if (chatStatus === 'waitYunzaixian') return
 
-        console.log('开始添加气泡，气泡状态', data.status)
+        console.log('添加气泡，类型：', data.status)
         //todo:此处暂时用本地时间
         data.time = new Date()
 
         switch (data.status) {
             //用户发送消息所产生的气泡
             case 'chat':
-                console.log('显示用户发送的消息')
                 var hour = data.time.getHours()
                 var minute = data.time.getMinutes()
                 hour = hour.toString().length === 1 ? '0' + hour.toString() : hour
@@ -79,7 +90,6 @@ define(function (require, exports, module) {
                 break;
             //服务器返回的气泡
             case 'server':
-                console.log('显示服务器发送的消息')
                 var hour = data.time.getHours()
                 var minute = data.time.getMinutes()
                 hour = hour.toString().length === 1 ? '0' + hour.toString() : hour
@@ -152,8 +162,10 @@ define(function (require, exports, module) {
                         status: 'server',
                         content: data.info.reply
                     })
-                    if (parseInt(data.info.skillGroup, 10) > 3 && chatStatus !== 'waitYunzaixian') {
+                    console.log('当前skillGroup值：' + data.info.skillGroup, '，阈值：' + 2)
+                    if (parseInt(data.info.skillGroup, 10) >= 2 && chatStatus !== 'waitYunzaixian') {
                         $('#artificial-service').show()
+                        console.log('显示转人工')
                         $contentWrapper.css({bottom: $('#artificial-service').height() - 1})
                     }
                     hideWaitInputTips()
@@ -189,16 +201,105 @@ define(function (require, exports, module) {
             })
     }
 
+
+    var config = {
+        '取消提现身份证推框': 'CANCEL_WITHDRAW_WINDOW',
+        '签约信息查询获取身份证推框': 'QUERY_CARD_SIGN_WINDOW',
+        '快捷交易明细银行卡号推送框': 'POS_TRADE_DETAIL_WINDOW',
+        '受理单创建联系邮箱推送框': 'TASK_EMAIL_WINDOW',
+        '受理单创建身份证推框': 'TASK_IDENTIFY_WINDOW',
+        '用户输入登录账号推框': 'USER_LOGON_ID',
+        '登录框': 'LOGIN_WINDOW',
+        '修改登录email推送框': 'TASK_LOGIN_EMAIL_WINDOW',
+        '身份证号': 'identifyId',
+        '邮箱': 'TASK_LOGIN_EMAIL_WINDOW',
+        '请再输入一遍邮箱': 'reemail',
+        '支付宝账号': 'logonId',
+        '银行卡号': 'bankCardNo',
+        '原因': 'reason'
+    }
+
+    var pushPopup = new Xbox({
+        content: '<div id="push-popup">' +
+            '' +
+            '</div>',
+        width: 420
+    });
+
+    $document.on('click', '.J-close-form-btn', function () {
+        pushPopup.hide()
+    })
+
+    var pushPopupTpl = Handlebars.compile($('#push-popup-tpl').val())
+
+    $document.on('submit', 'form.push-popup-form', function (ev) {
+        ev.preventDefault()
+        /*
+         发送信息的接口
+         url:https://clive.alipay.com/pushWindow.json
+         * query
+         * token:ab79eb90cfb54a92aeb9c499082aa133
+         visitorId:2088002474745230
+         sid:e3b1c3233d834773b5f2b9262ac969dc006
+         code:
+         stype:2
+         language:1
+         instanceId:1
+         serviceToken:0f1337ae62ab492d819bd4d5d22d211d000
+         formData
+         pushValues:logonEmail=test%40test.com&reLogonEmail=test%40test.com&msg_id=e5ce8&pushType=SERVER_PUSH&msg_code=PUSH_SERVICE&windowCode=TASK_LOGIN_EMAIL_WINDOW
+         windowCode:TASK_LOGIN_EMAIL_WINDOW
+         pushType:VISITOR_COMMIT
+         _input_charset:utf-8
+
+         fail:
+         {"msg":"email已被占用,请重新输入","stat":"fail"}
+
+         success:
+         {"msg":"<font color='red'>[系统消息]<\/font>  您已经为修改登录email推送框提供信息","stat":"ok"}
+
+         * */
+        console.log($(this).serialize())
+    })
+
     /*发送消息*/
     function sendMessage(content, callback) {
-        console.log('开始发送消息')
+
+        if (config[content]) {
+            /*
+             抓取表单配置信息
+             https://clive.alipay.com/loadWindow.json?windowCode=TASK_LOGIN_EMAIL_WINDOW&language=1&instanceId=1&serviceToken=0f1337ae62ab492d819bd4d5d22d211d000
+             * */
+            $.ajax({
+                url: 'https://clive.alipay.com/loadWindow.json',
+                dataType: 'jsonp',
+                jsonp: '_callback',
+                cache: false,
+                data: {
+                    windowCode: config[content],
+                    language: 1,
+                    instanceId: 1,
+                    serviceToken: '1a0831eb51ee42058f66e43078433124000'
+                },
+                success: function (data) {
+                    mid = 'test'
+                    data.pushWindow.mid = mid
+                    pushPopup.set('content', '<div>' + pushPopupTpl(data.pushWindow) + '</div>')
+                    pushPopup.show()
+                }
+            })
+
+            return
+        }
+
+
         if ($.trim(content).length < 1) {
             return
         }
         if (!delaySendMessage) {
             delaySendMessage = true
 
-            console.log('当前状态', chatStatus)
+            console.log('发送消息，当前状态：', chatStatus)
             switch (chatStatus) {
                 case 'xiaobao':
                     guideQuestion(content, callback)
@@ -251,27 +352,21 @@ define(function (require, exports, module) {
         }).success(function (data) {
                 $(data).each(function (index, item) {
                     var content
-                    console.log('轮询消息,cmd:', item.cmd, '剩余排队人数' + item.count)
                     switch (item.cmd) {
                         //客服小休
                         case 'serverBreak':
-                            content = '客服小休'
                             break;
                         //客服离线
                         case 'serverLeave':
-                            content = '客服离线'
                             break;
                         //客服会话超时
                         case 'serverTimeOut':
-                            content = '客服会话超时'
                             break;
                         //客服下班提醒
                         case 'serverOffLineRemind':
-                            content = '客服下班提醒'
                             break;
                         //会话建立
                         case 'sessionStart':
-                            content = item.content
                             $content.find('.J-queuing-number').text(0)
                             //将所有排队容器的排队标志去除
                             $content.find('.J-run-queue').removeClass('.J-run-queue')
@@ -282,15 +377,14 @@ define(function (require, exports, module) {
                             })
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             break;
                         //会话转接
                         case 'sessionSwitch':
-                            content = '会话转接'
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             break;
                         //会话关闭
                         case 'sessionClosed':
@@ -304,26 +398,25 @@ define(function (require, exports, module) {
                             break;
                         //访客排队
                         case 'queueWait':
+                            console.log('轮询消息,cmd:', item.cmd, '剩余排队人数' + item.count)
                             $content.find('.J-queuing-number').text(item.count)
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             break;
                         //访客离开
                         case 'userLeave':
-                            content = '访客离开'
                             break;
                         //访客超时提醒
                         case 'userRemind':
-                            content = '访客超时提醒'
                             break;
                         //文本消息
                         case 'text':
-                            content = '文本消息'
+                            mid = data.mid
                             chatStatus = 'yunzaixian'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             showWaitInputTips()
                             setTimeout(function () {
                                 addPopup({
@@ -335,32 +428,30 @@ define(function (require, exports, module) {
                             break;
                         //推送服务消息
                         case 'PUSH_SERVICE':
-                            content = '推送服务消息'
+                            mid = data.mid
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
+
+
                             break;
                         //客服推送登录服务
                         case 'NEED_LOGIN':
-                            content = 'NEED_LOGIN'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             break;
                         //访客登录成功
                         case 'LOGIN_SUCCESS':
-                            content = '访客登录成功'
                             beforeFetchMessageCl = setTimeout(function () {
                                 fetchMessage()
-                            }, 1000 + Math.random() * 500)
+                            }, 1000)
                             break;
                         //访客拒绝登录
                         case 'LOGIN_REFUSE':
-                            content = '访客拒绝登录'
                             break;
                         //访客登录失败
                         case 'LOGIN_FAIL':
-                            content = '访客登录失败'
                             break;
                     }
 
@@ -370,7 +461,7 @@ define(function (require, exports, module) {
                 //todo:出错次数超出阈值时取消
                 beforeFetchMessageCl = setTimeout(function () {
                     fetchMessage()
-                }, 1000 + Math.random() * 500)
+                }, 1000)
             })
     }
 
@@ -405,6 +496,7 @@ define(function (require, exports, module) {
     $(document).on('click', '.J-switch-to-yun-zaixian', function () {
         $content.append(queueTpl({queuingNumber: '...'}))
         $('#artificial-service').hide()
+        console.log('隐藏转人工')
         $contentWrapper.css({bottom: 1})
         $content.stop().animate({scrollTop: $content[0].scrollHeight})
         chatStatus = 'waitYunzaixian'
@@ -445,14 +537,21 @@ define(function (require, exports, module) {
     })
 
     /*统计剩余字数*/
-    $(survey.elements['content']).on('keypress', function (ev) {
+    $(survey.elements['content']).on('keydown', function (ev) {
         setTimeout(function () {
             countTextareaLeft()
         }, 0)
     })
 
     function countTextareaLeft() {
-        $survey.find('.J-left').text(200 - survey.elements['content'].value.length)
+        var length = 200 - survey.elements['content'].value.length
+        $survey.find('.J-left').text(length)
+        if (survey.elements['content'].value.replace(/\s/gmi, '').length < 1) {
+            $submitBtn.removeClass('active')
+        } else {
+            $submitBtn.addClass('active')
+        }
+
     }
 
     /*当点击服务器返回的list的时候，发送消息出去*/
@@ -462,13 +561,16 @@ define(function (require, exports, module) {
 
     /*点击有帮助时，关闭浮层*/
     $('.J-helpful').on('click', function () {
+        console.log('点击了有帮助')
         $('#artificial-service').hide()
+        console.log('隐藏转人工')
         $contentWrapper.css({bottom: 1})
     })
 
     /*自动提示*/
     new AutoComplete({
         trigger: survey.elements['content'],
+        /*TODO:query有换行会报错*/
         dataSource: 'http://sug.so.360.cn/suggest/word?word={{query}}&t={{timestamp}}&encodein=utf-8&encodeout=utf-8',
         locator: 's',
         align: {
@@ -489,5 +591,15 @@ define(function (require, exports, module) {
     $(document).on('click', '.J-close-notify', function () {
         $('#global-notify').slideUp()
     })
+
+
+    //页面打开后，获取URL中的sourceID
+
+    //
+
+    $('#test-port li').on('click', function () {
+        sendMessage($(this).text())
+    })
+
 
 })

@@ -44,7 +44,6 @@ body {
 }
 
 #artificial-service p s,
-#input-content input.submit,
 #output-content .server a.more s,
 #output-content .server .content:after,
 #output-content .client .content:after,
@@ -126,13 +125,19 @@ body {
     bottom: 5px;
     width: 130px;
     height: 30px;
-    background-position: 0 0;
-    background-color: #e89a36;
+    background-color: #999;
     border: none;
     font-family: "Microsoft Yahei", simsun, sans-serif;
     font-size: 14px;
     cursor: pointer;
     color: #fff;
+    border-radius: 3px;
+    cursor: not-allowed;
+}
+
+body #input-content input.active {
+    background: #e89a36;
+    cursor: pointer;
 }
 
 /*
@@ -589,6 +594,54 @@ body {
     bottom: 6px;
     color: #999;
     z-index: 9;
+}
+
+form.push-popup-form {
+    font-size: 12px;
+}
+
+form.push-popup-form .header {
+    font-size: 16px;
+    background: #eee;
+    padding: 12px;
+    font-weight: bold;
+}
+
+form.push-popup-form th,
+form.push-popup-form td {
+    padding: 12px 5px;
+}
+
+form.push-popup-form .table-content {
+    padding: 12px 0;
+}
+
+form.push-popup-form th {
+    text-align: right;
+}
+
+form.push-popup-form .btn-control {
+    text-align: center;
+}
+
+form.push-popup-form table {
+    width: 100%;
+}
+
+form.push-popup-form input[type=text] {
+    width: 80%;
+    display: block;
+    padding: 3px 5px;
+}
+
+/*todo:remove*/
+#test-port li {
+    padding: 8px 0;
+}
+
+#test-port li:hover {
+    cursor: pointer;
+    color: #f60;
 }
 
 /*End*/
